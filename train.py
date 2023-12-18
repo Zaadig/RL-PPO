@@ -51,7 +51,7 @@ def train_agent():
 
         # Save the model periodically and at the end of training
         if episode % Config.SAVE_MODEL_EVERY == 0 or episode == Config.NUM_EPISODES - 1:
-            torch.save(agent.model.state_dict(), f'ppo_model_episode_{episode}.pth')
+            torch.save(agent.model.state_dict(), f'models/ppo_model_episode_{episode}.pth')
 
     env.close()
 
