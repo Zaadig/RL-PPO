@@ -2,7 +2,7 @@
 class Config:
     # Environment settings
     ENV_NAME = "Breakout-v0"  # Name of the environment to train on
-    NUM_EPISODES = 1000           # Total number of training episodes
+    NUM_EPISODES = 4000           # Total number of training episodes
     RENDER_ENV = True             # Whether to render the environment
     RENDER_EVERY = 50             # Render the environment every N episodes
     LOG_EVERY = 10                # Logging interval
@@ -24,7 +24,7 @@ class Config:
     UPDATE_EVERY = 2048           # How often to update the network
     MINI_BATCH_SIZE = 64          # Size of the mini-batch
     PPO_EPOCHS = 10               # Number of epochs to update the network
-    SAVE_MODEL_EVERY = 50         # Number of episodes for setting a checkpoint
+    SAVE_MODEL_EVERY = 200         # Number of episodes for setting a checkpoint
 
     # Other settings
     SEED = 42                     # Random seed for reproducibility

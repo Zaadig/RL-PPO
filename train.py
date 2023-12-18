@@ -7,6 +7,8 @@ from config.config import Config
 from utils.logger import Logger
 from utils.helpers import preprocess_observation
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def train_agent():
     # Set up the environment
     env = gym.make(Config.ENV_NAME)

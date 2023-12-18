@@ -1,10 +1,10 @@
-# evaluate.py
-
 import gym
 import torch
 from agents.ppo_agent import Agent
 from config.config import Config
 from utils.helpers import preprocess_observation
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def evaluate_agent(model_path, num_episodes=100):
     # Environment set up
@@ -13,7 +13,7 @@ def evaluate_agent(model_path, num_episodes=100):
 
     # Initializing the agent
     agent = Agent(env, Config)
-    agent.model.load_state_dict(torch.load(model_path))
+    agent.model.load_state_dict(torch.load(model_path, map_location=device))
 
     total_rewards = []
 
@@ -24,6 +24,7 @@ def evaluate_agent(model_path, num_episodes=100):
         done = False
 
         while not done:
+            env.render()  # Render the game screen
             action = agent.choose_action(state)
             state, reward, done, _ = env.step(action)
             state = preprocess_observation(state)
@@ -33,11 +34,10 @@ def evaluate_agent(model_path, num_episodes=100):
                 total_rewards.append(episode_reward)
                 print(f"Episode: {episode + 1}, Reward: {episode_reward}")
 
+    env.close()  # Close the environment after evaluation
     avg_reward = sum(total_rewards) / len(total_rewards)
     print(f"Average Reward: {avg_reward}")
 
-    env.close()
-
 if __name__ == "__main__":
-    model_path = 'model.pth'
+    model_path = 'ppo_model_episode_199.pth'
     evaluate_agent(model_path)

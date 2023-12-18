@@ -8,6 +8,7 @@ from collections import deque
 import numpy as np
 import torch.nn.functional as F
 
+
 class Agent:
     def __init__(self, env, config):
         self.env = env
@@ -17,6 +18,10 @@ class Agent:
         self.model = PPOAgent(input_channels=1,
                               hidden_size=config.HIDDEN_SIZE,
                               num_actions=env.action_space.n)
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self.device) 
+
         self.optimizer = optim.Adam(self.model.parameters(), lr=config.LEARNING_RATE)
 
         # Rollout buffer
@@ -27,7 +32,7 @@ class Agent:
         self.dones = []
 
     def choose_action(self, state):
-        state = torch.from_numpy(state).float().unsqueeze(0)
+        state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
         # print("State shape in choose_action:", state.shape)
         with torch.no_grad():
             action_probs, _ = self.model(state)
@@ -35,11 +40,11 @@ class Agent:
         return action
 
     def store_transition(self, state, action, reward, next_state, done):
-        state = torch.from_numpy(state).float().unsqueeze(0)
-        next_state = torch.from_numpy(next_state).float().unsqueeze(0)
-        action = torch.tensor(action)
-        reward = torch.tensor(reward)
-        done = torch.tensor(done)
+        state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
+        next_state = torch.from_numpy(next_state).float().unsqueeze(0).to(self.device)
+        action = torch.tensor(action).to(self.device)
+        reward = torch.tensor(reward).to(self.device)
+        done = torch.tensor(done).to(self.device)
 
         # Evaluate action
         with torch.no_grad():
@@ -65,7 +70,7 @@ class Agent:
             returns.appendleft(R)
 
         # Normalize returns
-        returns = torch.tensor(list(returns)).float()
+        returns = torch.tensor(list(returns)).float().to(self.device)
         returns = (returns - returns.mean()) / (returns.std() + 1e-5)
 
         # Convert lists to tensors
