@@ -3,10 +3,22 @@
 
 import torch
 import torch.optim as optim
+import torch.nn as nn
+from torch.optim.lr_scheduler import LambdaLR
 from .model import PPOAgent
 from collections import deque
 import numpy as np
 import torch.nn.functional as F
+
+def compute_gae(rewards, values, gamma, lam):
+    # Assuming rewards and values are numpy arrays
+    gae = 0
+    returns = np.zeros_like(rewards)
+    for t in reversed(range(len(rewards))):
+        delta = rewards[t] + gamma * values[t + 1] - values[t]
+        gae = delta + gamma * lam * gae
+        returns[t] = gae + values[t]
+    return returns
 
 
 class Agent:
@@ -23,6 +35,8 @@ class Agent:
         self.model.to(self.device) 
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=config.LEARNING_RATE)
+
+        # self.scheduler = LambdaLR(self.optimizer, lr_lambda=self.lr_lambda)
 
         # Rollout buffer
         self.states = []
@@ -59,18 +73,24 @@ class Agent:
         self.dones.append(done)
 
     def learn(self):
-        R = 0
-        returns = deque()
+        # Move tensors to CPU and then convert to NumPy arrays
+        rewards = np.array([r.item() for r in self.rewards])
+        dones = np.array([d.item() for d in self.dones])
 
-        # Compute returns
-        for reward, done in zip(reversed(self.rewards), reversed(self.dones)):
-            if done:
-                R = 0
-            R = reward + self.config.GAMMA * R
-            returns.appendleft(R)
+        # Compute state values for all states
+        states_tensor = torch.stack(self.states).squeeze(dim=1)
+        _, state_values = self.model(states_tensor.to(self.device))
+        state_values = state_values.squeeze().cpu().detach().numpy()
+
+        # Append next state value for GAE computation
+        next_state_value = 0 if dones[-1] else state_values[-1]
+        state_values = np.append(state_values, next_state_value)
+
+        # Compute GAE
+        returns = compute_gae(rewards, state_values, self.config.GAMMA, self.config.GAE_LAMBDA)
+        returns = torch.tensor(returns).float().to(self.device)
 
         # Normalize returns
-        returns = torch.tensor(list(returns)).float().to(self.device)
         returns = (returns - returns.mean()) / (returns.std() + 1e-5)
 
         # Convert lists to tensors
@@ -124,3 +144,14 @@ class Agent:
 
                 if done:
                     self.learn()
+
+            # Update the learning rate at the end of each episode
+            self.scheduler.step()
+
+    # def lr_lambda(self, epoch):
+    #     # Define a custom lambda function for the scheduler
+    #     # This example linearly decreases the learning rate from 2.5e-4 to 1e-5
+    #     initial_lr = 2.5e-4
+    #     final_lr = 1e-5
+    #     total_epochs = self.config.NUM_EPISODES
+    #     return final_lr + (initial_lr - final_lr) * (1 - epoch / total_epochs)

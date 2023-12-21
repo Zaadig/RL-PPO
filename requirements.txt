@@ -1,0 +1,6 @@
+gym[atari,accept-rom-license] 
+opencv-python
+numpy 
+matplotlib
+torch
+python==3.9.*

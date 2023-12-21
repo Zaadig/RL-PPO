@@ -1,5 +1,6 @@
 import gym
 import torch
+import matplotlib.pyplot as plt
 from agents.ppo_agent import Agent
 from config.config import Config
 from utils.helpers import preprocess_observation
@@ -34,10 +35,19 @@ def evaluate_agent(model_path, num_episodes=100):
                 total_rewards.append(episode_reward)
                 print(f"Episode: {episode + 1}, Reward: {episode_reward}")
 
+                 # Plotting and saving the rewards
+                plt.figure(figsize=(10, 6))
+                plt.plot(range(1, episode + 2), total_rewards, marker='o')
+                plt.xlabel('Episode')
+                plt.ylabel('Reward')
+                plt.title('Rewards per Episode')
+                plt.savefig('episode_rewards.png')
+                plt.close()
+
     env.close()  # Close the environment after evaluation
     avg_reward = sum(total_rewards) / len(total_rewards)
     print(f"Average Reward: {avg_reward}")
 
 if __name__ == "__main__":
-    model_path = 'ppo_model_episode_199.pth'
+    model_path = 'models/ppo_model_episode_600.pth'
     evaluate_agent(model_path)

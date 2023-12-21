@@ -14,14 +14,14 @@ class CNNBase(nn.Module):
 
         self.main = nn.Sequential(
             nn.Conv2d(input_channels, 32, kernel_size=8, stride=4),
-            nn.ReLU(),
+            nn.LeakyReLU(0.1),
             nn.Conv2d(32, 64, kernel_size=4, stride=2),
-            nn.ReLU(),
+            nn.LeakyReLU(0.1),
             nn.Conv2d(64, 64, kernel_size=3, stride=1),
-            nn.ReLU(),
+            nn.LeakyReLU(0.1),
             nn.Flatten(),
             nn.Linear(3136, hidden_size),
-            nn.ReLU()
+            nn.LeakyReLU(0.1),
         )
 
     def forward(self, x):
